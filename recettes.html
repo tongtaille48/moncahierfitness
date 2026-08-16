@@ -48,6 +48,7 @@
       linear-gradient(160deg, #FF7A18 0%, #C1470E 40%, #7A2E05 100%);
     color:var(--text);
     font-family:'Inter',sans-serif;
+    height:100vh;
     height:100dvh;
     display:flex;
     flex-direction:column;
@@ -474,6 +475,19 @@
 <footer>Crédit - Charly x Claude</footer>
 
 <script>
+// Force la hauteur exacte de l'écran en px (filet de sécurité pour Safari iOS,
+// au cas où dvh ne serait pas correctement supporté/appliqué)
+(function(){
+  function setAppHeight(){
+    const h = window.innerHeight;
+    document.documentElement.style.height = h + 'px';
+    document.body.style.height = h + 'px';
+  }
+  setAppHeight();
+  window.addEventListener('resize', setAppHeight);
+  window.addEventListener('orientationchange', setAppHeight);
+})();
+
 // Empêche tout scroll/rebond du document en dehors des zones scrollables prévues
 (function(){
   const SCROLLABLE_SELECTOR = 'main, .cat-overlay, .detail-overlay, .ingredients';
