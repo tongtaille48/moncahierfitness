@@ -217,6 +217,7 @@
     position:fixed; inset:0; background:var(--bg);
     z-index:40; overflow-y:auto; display:none;
     touch-action:pan-y; -webkit-overflow-scrolling:touch;
+    padding-top:env(safe-area-inset-top);
   }
   .cat-overlay.open{display:block; animation:fadeIn .25s ease;}
 
@@ -289,6 +290,7 @@
     position:fixed; inset:0; background:var(--bg);
     z-index:50; overflow-y:auto; display:none;
     touch-action:pan-y; -webkit-overflow-scrolling:touch;
+    padding-top:env(safe-area-inset-top);
   }
   .detail-overlay.open{display:block; animation:fadeIn .25s ease;}
   @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
