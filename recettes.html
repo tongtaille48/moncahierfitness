@@ -551,7 +551,6 @@ function renderGrid(){
     const card = document.createElement('div');
     card.className = 'card';
     card.innerHTML = `
-      <div class="card-emoji">${first ? first.emoji : cat.emoji}</div>
       <div class="card-main">
         <div class="card-cat"><span class="dot" style="background:${cat.colorCard}"></span>${cat.label}</div>
         <div class="card-title">${catRecipes.length} recette${catRecipes.length>1?'s':''}</div>
