@@ -32,7 +32,7 @@
   }
   *{box-sizing:border-box;}
   html{
-    background:linear-gradient(180deg, #FF7A18 0%, #E8690F 50%, #FF7A18 100%);
+    background:linear-gradient(180deg, #FF7A18 0%, #FF7A18 40%, #E8690F 50%, #FF7A18 60%, #FF7A18 100%);
     background-color:#FF7A18;
     height:100%;
     width:100%;
@@ -46,7 +46,7 @@
     padding-top:env(safe-area-inset-top);
     background:
       radial-gradient(ellipse 700px 400px at 15% 0%, rgba(255,209,102,0.35), transparent 60%),
-      linear-gradient(180deg, #FF7A18 0%, #E8690F 50%, #FF7A18 100%);
+      linear-gradient(180deg, #FF7A18 0%, #FF7A18 40%, #E8690F 50%, #FF7A18 60%, #FF7A18 100%);
     background-color:#FF7A18;
     color:var(--text);
     font-family:'Inter',sans-serif;
@@ -480,19 +480,6 @@
 <footer><span class="version">v1.0</span><span class="credit">Crédit - Charly x Claude</span></footer>
 
 <script>
-// Force la hauteur exacte de l'écran en px (filet de sécurité pour Safari iOS,
-// au cas où dvh ne serait pas correctement supporté/appliqué)
-(function(){
-  function setAppHeight(){
-    const h = window.innerHeight;
-    document.documentElement.style.height = h + 'px';
-    document.body.style.height = h + 'px';
-  }
-  setAppHeight();
-  window.addEventListener('resize', setAppHeight);
-  window.addEventListener('orientationchange', setAppHeight);
-})();
-
 // Empêche tout scroll/rebond du document en dehors des zones scrollables prévues
 (function(){
   const SCROLLABLE_SELECTOR = 'main, .cat-overlay, .detail-overlay, .ingredients';
