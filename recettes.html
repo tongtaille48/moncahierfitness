@@ -62,10 +62,8 @@
     min-width:0;
     width:100%;
     min-height:0;
-    overflow-y:auto;
-    -webkit-overflow-scrolling:touch;
-    overscroll-behavior:contain;
-    touch-action:pan-y;
+    overflow-y:hidden;
+    touch-action:none;
   }
 
   .topbar{
@@ -541,7 +539,7 @@
 <script>
 // Empêche tout scroll/rebond du document en dehors des zones scrollables prévues
 (function(){
-  const SCROLLABLE_SELECTOR = 'main, .cat-overlay, .detail-overlay, .ingredients';
+  const SCROLLABLE_SELECTOR = '.cat-overlay, .detail-overlay, .ingredients';
   document.addEventListener('touchmove', function(e){
     if(!e.target.closest(SCROLLABLE_SELECTOR)){
       e.preventDefault();
