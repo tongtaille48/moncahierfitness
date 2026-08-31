@@ -62,8 +62,10 @@
     min-width:0;
     width:100%;
     min-height:0;
-    overflow-y:hidden;
-    touch-action:none;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    overscroll-behavior:contain;
+    touch-action:pan-y;
   }
 
   .topbar{
@@ -666,7 +668,7 @@
 <script>
 // Empêche tout scroll/rebond du document en dehors des zones scrollables prévues
 (function(){
-  const SCROLLABLE_SELECTOR = '.cat-overlay, .detail-overlay, .ingredients';
+  const SCROLLABLE_SELECTOR = 'main, .cat-overlay, .detail-overlay, .ingredients';
   document.addEventListener('touchmove', function(e){
     if(!e.target.closest(SCROLLABLE_SELECTOR)){
       e.preventDefault();
@@ -987,14 +989,86 @@ function changeShoppingCount(id, delta){
   if(el) el.textContent = next;
 }
 
+function parseIngredientQty(str){
+  // fractions type "1/2 avocat"
+  let m = str.match(/^(\d+)\/(\d+)\s+(.+)$/);
+  if(m){
+    return {qty: parseInt(m[1],10)/parseInt(m[2],10), unit:null, name:m[3].trim()};
+  }
+  // "80g de blanc de poulet", "50g d'épinards", "2 œufs", "150g de skyr"
+  m = str.match(/^(\d+(?:[.,]\d+)?)\s*(g|kg|ml|l)?\s*(?:de\s+|d['’])?(.+)$/i);
+  if(m){
+    const qty = parseFloat(m[1].replace(',', '.'));
+    const unit = m[2] ? m[2].toLowerCase() : null;
+    const name = m[3].trim().replace(/\s*\([^)]*\)\s*$/, '').trim();
+    return {qty, unit, name};
+  }
+  return null;
+}
+
+function singularKey(name){
+  let n = name.toLowerCase().trim();
+  if(n.length > 3 && n.endsWith('s') && !n.endsWith('ss')) n = n.slice(0, -1);
+  return n;
+}
+
+function formatQty(q){
+  if(Number.isInteger(q)) return q.toString();
+  return Math.ceil(q).toString();
+}
+
+function pluralizeName(name, qty){
+  if(/[\d%]/.test(name)) return name;
+  const hasS = /s$/i.test(name);
+  if(qty > 1 && !hasS) return name + 's';
+  if(qty <= 1 && hasS && name.length > 3) return name.slice(0, -1);
+  return name;
+}
+
+const EXCLUDE_PATTERN = /selon vos envies/i;
+const BULK_PATTERN = /^\d+(?:\/\d+)?\s*(?:c\.à\.[cs]\.?|filet(?:s)?|pincée(?:s)?)\s*(?:de\s+|d['’])?(.+)$/i;
+
 function generateShoppingList(){
-  const lines = [];
+  const quantifiedMap = {};
+  const plainSet = {};
+
   recipes.forEach(r=>{
     const count = shoppingCounts[r.id] || 0;
     if(count === 0) return;
     r.ingredients.forEach(ing=>{
-      lines.push(count > 1 ? `×${count} ${ing}` : ing);
+      if(EXCLUDE_PATTERN.test(ing)) return;
+
+      const bulkMatch = ing.match(BULK_PATTERN);
+      if(bulkMatch){
+        const name = bulkMatch[1].trim();
+        const cap = name.charAt(0).toUpperCase() + name.slice(1);
+        plainSet[name.toLowerCase()] = cap;
+        return;
+      }
+
+      const parsed = parseIngredientQty(ing);
+      if(parsed){
+        const key = (parsed.unit || '') + '|' + singularKey(parsed.name);
+        if(!quantifiedMap[key]) quantifiedMap[key] = {qty:0, unit:parsed.unit, name:parsed.name};
+        quantifiedMap[key].qty += parsed.qty * count;
+      } else {
+        plainSet[ing.toLowerCase().trim()] = ing.trim();
+      }
     });
+  });
+
+  const lines = [];
+  Object.values(quantifiedMap).forEach(item=>{
+    const qtyStr = formatQty(item.qty);
+    if(item.unit){
+      const article = /^[aeiouyàâäéèêëïîôöùûüh]/i.test(item.name) ? "d'" : "de ";
+      lines.push(`${qtyStr}${item.unit} ${article}${item.name}`);
+    } else {
+      lines.push(`${qtyStr} ${pluralizeName(item.name, item.qty)}`);
+    }
+  });
+  Object.values(plainSet).forEach(name=>{
+    lines.push(name);
   });
 
   const content = document.getElementById('shoppingListContent');
