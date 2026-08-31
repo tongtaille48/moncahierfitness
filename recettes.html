@@ -1000,11 +1000,20 @@ function parseIngredientQty(str){
   if(m){
     const qty = parseFloat(m[1].replace(',', '.'));
     const unit = m[2] ? m[2].toLowerCase() : null;
-    const name = m[3].trim().replace(/\s*\([^)]*\)\s*$/, '').trim();
+    let name = m[3].trim().replace(/\s*\([^)]*\)\s*$/, '').trim();
+    name = name.replace(/\s+entiers?$/i, '').trim();
     return {qty, unit, name};
   }
   return null;
 }
+
+function normalizeAlias(name){
+  if(/fromage frais all[ée]g[ée]/i.test(name)) return 'Carrés Frais 0%';
+  if(/oignon/i.test(name)) return 'oignon';
+  return name;
+}
+
+const UNIT_WEIGHTS = { 'oignon': 150 };
 
 function singularKey(name){
   let n = name.toLowerCase().trim();
@@ -1025,36 +1034,59 @@ function pluralizeName(name, qty){
   return name;
 }
 
-const EXCLUDE_PATTERN = /selon vos envies/i;
+const EXCLUDE_PATTERN = /selon vos envies|^un peu d['’]/i;
 const BULK_PATTERN = /^\d+(?:\/\d+)?\s*(?:c\.à\.[cs]\.?|filet(?:s)?|pincée(?:s)?)\s*(?:de\s+|d['’])?(.+)$/i;
 
 function generateShoppingList(){
   const quantifiedMap = {};
   const plainSet = {};
 
+  function processIngredient(ing, count){
+    ing = ing.trim();
+    if(EXCLUDE_PATTERN.test(ing)) return;
+
+    if(ing.includes(' & ')){
+      ing.split(' & ').forEach(part=>processIngredient(part, count));
+      return;
+    }
+
+    const bulkMatch = ing.match(BULK_PATTERN);
+    if(bulkMatch){
+      const name = normalizeAlias(bulkMatch[1].trim());
+      const cap = name.charAt(0).toUpperCase() + name.slice(1);
+      plainSet[name.toLowerCase()] = cap;
+      return;
+    }
+
+    const parsed = parseIngredientQty(ing);
+    if(parsed){
+      const name = normalizeAlias(parsed.name);
+      const key = (parsed.unit || '') + '|' + singularKey(name);
+      if(!quantifiedMap[key]) quantifiedMap[key] = {qty:0, unit:parsed.unit, name};
+      quantifiedMap[key].qty += parsed.qty * count;
+    } else {
+      const name = normalizeAlias(ing);
+      plainSet[name.toLowerCase()] = name;
+    }
+  }
+
   recipes.forEach(r=>{
     const count = shoppingCounts[r.id] || 0;
     if(count === 0) return;
-    r.ingredients.forEach(ing=>{
-      if(EXCLUDE_PATTERN.test(ing)) return;
+    r.ingredients.forEach(ing=>processIngredient(ing, count));
+  });
 
-      const bulkMatch = ing.match(BULK_PATTERN);
-      if(bulkMatch){
-        const name = bulkMatch[1].trim();
-        const cap = name.charAt(0).toUpperCase() + name.slice(1);
-        plainSet[name.toLowerCase()] = cap;
-        return;
-      }
-
-      const parsed = parseIngredientQty(ing);
-      if(parsed){
-        const key = (parsed.unit || '') + '|' + singularKey(parsed.name);
-        if(!quantifiedMap[key]) quantifiedMap[key] = {qty:0, unit:parsed.unit, name:parsed.name};
-        quantifiedMap[key].qty += parsed.qty * count;
-      } else {
-        plainSet[ing.toLowerCase().trim()] = ing.trim();
-      }
-    });
+  // Convertit les entrées en grammes vers des unités quand un poids de référence est connu
+  Object.keys(UNIT_WEIGHTS).forEach(itemName=>{
+    const weight = UNIT_WEIGHTS[itemName];
+    const gramKey = 'g|' + itemName;
+    const unitKey = '|' + itemName;
+    if(quantifiedMap[gramKey]){
+      const units = Math.ceil(quantifiedMap[gramKey].qty / weight);
+      if(!quantifiedMap[unitKey]) quantifiedMap[unitKey] = {qty:0, unit:null, name:itemName};
+      quantifiedMap[unitKey].qty += units;
+      delete quantifiedMap[gramKey];
+    }
   });
 
   const lines = [];
