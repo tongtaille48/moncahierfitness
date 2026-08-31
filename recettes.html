@@ -453,14 +453,15 @@
   /* ---------- DETAIL ---------- */
   .detail-overlay{
     position:fixed; inset:0; background:var(--bg);
-    z-index:50; overflow-y:auto; display:none;
+    z-index:50; overflow-y:scroll; display:none;
     touch-action:pan-y; -webkit-overflow-scrolling:touch;
     padding-top:env(safe-area-inset-top);
+    height:100vh; height:100dvh;
   }
   .detail-overlay.open{display:block; animation:fadeIn .25s ease;}
   @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
 
-  .detail-inner{max-width:640px; margin:0 auto; padding:0 24px calc(80px + env(safe-area-inset-bottom));}
+  .detail-inner{max-width:640px; margin:0 auto; padding:0 24px calc(160px + env(safe-area-inset-bottom));}
 
   .back-btn{
     display:inline-flex; align-items:center; gap:8px;
@@ -976,6 +977,7 @@ function openShopping(){
       `;
     }).join('')}
     <button class="shop-generate-btn" onclick="generateShoppingList()">Générer la liste</button>
+    <div style="height:40px;"></div>
   `;
   document.getElementById('shoppingOverlay').classList.add('open');
   window.scrollTo(0,0);
@@ -1114,6 +1116,7 @@ function generateShoppingList(){
       <h2 style="font-family:'Space Grotesk',sans-serif; font-size:24px; margin:0 0 16px;">Liste de courses</h2>
       <div id="shopListLines">${lines.map(l=>`<div class="shop-list-item">${l}</div>`).join('')}</div>
       <button class="shop-generate-btn" id="copyListBtn" onclick="copyShoppingList()">Copier la liste</button>
+      <div style="height:40px;"></div>
     `;
   }
   document.getElementById('shoppingListOverlay').classList.add('open');
